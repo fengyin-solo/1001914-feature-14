@@ -14,6 +14,16 @@ class Store:
         self._tables: dict[str, list[dict[str, Any]]] = {
             name: [dict(row) for row in rows] for name, rows in SEED_ROWS.items()
         }
+        self._normalize_forecast_flags()
+
+    def _normalize_forecast_flags(self) -> None:
+        """功率预测的 pending/abnormal/预测状态 全部以 status 为准，避免看板与列表口径不一致。"""
+        for row in self._tables.get("forecast", []):
+            status = str(row.get("status") or "待生成")
+            row["status"] = status
+            row["预测状态"] = status
+            row["pending"] = status != "已复核"
+            row["abnormal"] = status == "偏差超标"
 
     def module_names(self) -> list[str]:
         return sorted(self._tables)
